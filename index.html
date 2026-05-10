@@ -495,7 +495,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;b
 // FIREBASE REST API
 // ══════════════════════════════
 let DB_URL='https://cadastro-camdoble-default-rtdb.firebaseio.com';
-let admPwd='admin123';
+let admPwd='123456';
 let demo=false,demoDb=[],allM=[],curM=null,curCPF='';
 let lastSavedData=null; // para gerar PDF após salvar
 
@@ -527,8 +527,11 @@ function cfgSave(){
   const url=v('c-url').trim().replace(/\/$/,'');
   const pass=v('c-pass').trim();
   if(!url){toast('Preencha a Database URL',true);return;}
-  DB_URL=url;if(pass)admPwd=pass;
-  try{localStorage.setItem('rtcfg',JSON.stringify({url,pass}));}catch(e){}
+  DB_URL=url;if(pass&&pass.length>0)admPwd=pass;
+  try{
+    localStorage.setItem('rtcfg',JSON.stringify({url,pass}));
+    if(pass&&pass.length>0)localStorage.setItem('admPwd',pass);
+  }catch(e){}
   ld(true);
   fetch(`${DB_URL}/ping.json`,{method:'PUT',body:JSON.stringify(true)})
     .then(r=>{
@@ -537,13 +540,24 @@ function cfgSave(){
       else r.json().then(e=>toast('Erro: '+(e.error||r.status),true));
     }).catch(e=>{ld(false);toast('Falha de conexão. Verifique as Regras do Firebase e use o site via https.',true);});
 }
-function demoInit(){demo=true;demoDb=[];toast('Modo demo ativado');go('sc-cpf');}
+function demoInit(){demo=true;demoDb=[];
+  // save current password
+  try{
+    const pass=v('c-pass').trim();
+    if(pass&&pass.length>0){admPwd=pass;localStorage.setItem('admPwd',pass);}
+  }catch(e){}
+  toast('Modo demo ativado');go('sc-cpf');
+}
 function tryRestore(){
   try{
+    // Recupera senha salva separadamente (mais confiável)
+    const savedPwd=localStorage.getItem('admPwd');
+    if(savedPwd&&savedPwd.length>0)admPwd=savedPwd;
+
     const s=localStorage.getItem('rtcfg');if(!s)return;
     const c=JSON.parse(s);
     if(c.url){si('c-url',c.url);DB_URL=c.url;}
-    if(c.pass){si('c-pass',c.pass);admPwd=c.pass;}
+    if(c.pass&&c.pass.length>0){si('c-pass',c.pass);admPwd=c.pass;}
     // Se já tem credenciais salvas, pula direto para a tela de CPF
     if(c.url){
       document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
@@ -554,7 +568,15 @@ function tryRestore(){
 
 // ══ NAVEGAÇÃO ══
 function go(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo(0,0);}
-function admLogin(){if(v('adm-pw')===admPwd){si('adm-pw','');loadAdmin();}else toast('Senha incorreta',true);}
+function admLogin(){
+  const entrada=v('adm-pw');
+  if(entrada===admPwd){
+    si('adm-pw','');loadAdmin();
+  } else {
+    toast('Senha incorreta. Verifique e tente novamente.',true);
+    console.log('Senha atual esperada:',admPwd,'Digitada:',entrada);
+  }
+}
 
 // ══ MÁSCARAS ══
 function mCPF(el){
@@ -1077,16 +1099,87 @@ function carregarFoto(input){
   const file = input.files[0];
   if(!file)return;
   if(file.size > 5*1024*1024){toast('Foto muito grande. Máximo 5MB.',true);return;}
+
   const reader = new FileReader();
   reader.onload = function(e){
-    fotoBase64 = e.target.result; // data:image/...;base64,...
-    document.getElementById('foto-img').src = fotoBase64;
-    document.getElementById('foto-img').style.display = 'block';
-    document.getElementById('foto-placeholder').style.display = 'none';
-    document.getElementById('btn-foto-remove').style.display = 'flex';
+    const rawBase64 = e.target.result;
+    // Corrige orientação EXIF usando Canvas (resolve foto deitada do celular)
+    corrigirOrientacaoFoto(rawBase64, function(base64Corrigido){
+      fotoBase64 = base64Corrigido;
+      document.getElementById('foto-img').src = fotoBase64;
+      document.getElementById('foto-img').style.display = 'block';
+      document.getElementById('foto-placeholder').style.display = 'none';
+      document.getElementById('btn-foto-remove').style.display = 'flex';
+    });
   };
   reader.readAsDataURL(file);
-  input.value = ''; // reset so same file can be re-selected
+  input.value = '';
+}
+
+// Lê orientação EXIF e redesenha a imagem corretamente no Canvas
+function getExifOrientation(base64, callback){
+  const arr = Uint8Array.from(atob(base64.split(',')[1]), c=>c.charCodeAt(0));
+  const view = new DataView(arr.buffer);
+  if(view.getUint16(0,false)!==0xFFD8){callback(1);return;}
+  let offset=2, len=arr.length;
+  while(offset<len){
+    const marker=view.getUint16(offset,false);
+    offset+=2;
+    if(marker===0xFFE1){
+      if(view.getUint32(offset+=2,false)!==0x45786966){callback(1);return;}
+      const little=view.getUint16(offset+=6,false)===0x4949;
+      offset+=view.getUint32(offset+4,little);
+      const tags=view.getUint16(offset,little);
+      offset+=2;
+      for(let i=0;i<tags;i++){
+        if(view.getUint16(offset+(i*12),little)===0x0112){
+          callback(view.getUint16(offset+(i*12)+8,little));
+          return;
+        }
+      }
+    } else if((marker&0xFF00)!==0xFF00) break;
+    else offset+=view.getUint16(offset,false);
+  }
+  callback(1);
+}
+
+function corrigirOrientacaoFoto(base64, callback){
+  getExifOrientation(base64, function(orientation){
+    const img = new Image();
+    img.onload = function(){
+      const canvas = document.createElement('canvas');
+      let w = img.width, h = img.height;
+
+      // Rotações que invertem largura/altura
+      if(orientation >= 5 && orientation <= 8){
+        canvas.width = h;
+        canvas.height = w;
+      } else {
+        canvas.width = w;
+        canvas.height = h;
+      }
+
+      const ctx = canvas.getContext('2d');
+
+      // Aplica transformação conforme orientação EXIF
+      switch(orientation){
+        case 2: ctx.transform(-1,0,0,1,w,0); break;
+        case 3: ctx.transform(-1,0,0,-1,w,h); break;
+        case 4: ctx.transform(1,0,0,-1,0,h); break;
+        case 5: ctx.transform(0,1,1,0,0,0); break;
+        case 6: ctx.transform(0,1,-1,0,h,0); break;  // 90° horário (mais comum no celular)
+        case 7: ctx.transform(0,-1,-1,0,h,w); break;
+        case 8: ctx.transform(0,-1,1,0,0,w); break;  // 90° anti-horário
+        default: break; // orientação 1 = normal
+      }
+
+      ctx.drawImage(img, 0, 0);
+
+      // Retorna JPEG com qualidade 0.85 (boa qualidade, tamanho razoável)
+      callback(canvas.toDataURL('image/jpeg', 0.85));
+    };
+    img.src = base64;
+  });
 }
 
 function removerFoto(){
