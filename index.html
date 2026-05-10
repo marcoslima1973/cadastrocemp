@@ -207,8 +207,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;b
   </div>
   <div class="fg"><label>Database URL *</label>
     <input id="c-url" type="text" value="https://cadastro-camdoble-default-rtdb.firebaseio.com"></div>
-  <div class="fg"><label>Senha do Administrador *</label>
-    <input id="c-pass" type="password" placeholder="Defina uma senha segura"></div>
+  <div class="info-box" style="background:#F0FFF4;border-color:#9AE6B4;color:#276749">
+    &#128274; <strong>Senha do Administrador: 123456</strong><br>
+    Para alterar a senha, edite o arquivo HTML na linha com <code>SENHA_ADMIN='123456'</code>
+  </div>
   <button class="btn btn-p" onclick="cfgSave()">Conectar</button>
   <button class="btn btn-s" onclick="demoInit()">Modo Demo (sem Firebase)</button>
 </div></div></div>
@@ -228,8 +230,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;b
   <span class="symbol">&#128272;</span>
   <h2>Acesso Administrativo</h2>
   <p>Área restrita para gestores do Centro</p>
-  <div class="fg"><label>Senha</label>
-    <input id="adm-pw" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')admLogin()"></div>
+  <div class="fg"><label>Senha do Administrador</label>
+    <input id="adm-pw" type="password" placeholder="••••••••" 
+      onkeydown="if(event.key==='Enter')admLogin()"
+      style="letter-spacing:.2em;font-size:1.1rem;text-align:center"></div>
   <button class="btn btn-p" onclick="admLogin()">Entrar</button>
   <button class="btn btn-s" onclick="go('sc-cpf')">&#8592; Voltar</button>
 </div></div></div>
@@ -527,10 +531,11 @@ function cfgSave(){
   const url=v('c-url').trim().replace(/\/$/,'');
   const pass=v('c-pass').trim();
   if(!url){toast('Preencha a Database URL',true);return;}
-  DB_URL=url;if(pass&&pass.length>0)admPwd=pass;
+  DB_URL=url;
+  // Senha admin é sempre fixa no código (123456) — não salva no localStorage
   try{
-    localStorage.setItem('rtcfg',JSON.stringify({url,pass}));
-    if(pass&&pass.length>0)localStorage.setItem('admPwd',pass);
+    localStorage.setItem('rtcfg',JSON.stringify({url}));
+    localStorage.removeItem('admPwd');
   }catch(e){}
   ld(true);
   fetch(`${DB_URL}/ping.json`,{method:'PUT',body:JSON.stringify(true)})
@@ -540,25 +545,20 @@ function cfgSave(){
       else r.json().then(e=>toast('Erro: '+(e.error||r.status),true));
     }).catch(e=>{ld(false);toast('Falha de conexão. Verifique as Regras do Firebase e use o site via https.',true);});
 }
-function demoInit(){demo=true;demoDb=[];
-  // save current password
-  try{
-    const pass=v('c-pass').trim();
-    if(pass&&pass.length>0){admPwd=pass;localStorage.setItem('admPwd',pass);}
-  }catch(e){}
+function demoInit(){
+  demo=true;demoDb=[];
   toast('Modo demo ativado');go('sc-cpf');
 }
 function tryRestore(){
   try{
-    // Recupera senha salva separadamente (mais confiável)
-    const savedPwd=localStorage.getItem('admPwd');
-    if(savedPwd&&savedPwd.length>0)admPwd=savedPwd;
+    // Limpa senha antiga incorreta do localStorage (garante sempre usar 123456)
+    localStorage.removeItem('admPwd');
 
     const s=localStorage.getItem('rtcfg');if(!s)return;
     const c=JSON.parse(s);
     if(c.url){si('c-url',c.url);DB_URL=c.url;}
-    if(c.pass&&c.pass.length>0){si('c-pass',c.pass);admPwd=c.pass;}
-    // Se já tem credenciais salvas, pula direto para a tela de CPF
+    // NÃO restaura senha do localStorage — senha é sempre fixa no código
+    // Se já tem URL salva, pula tela de configuração
     if(c.url){
       document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
       document.getElementById('sc-cpf').classList.add('active');
@@ -569,12 +569,12 @@ function tryRestore(){
 // ══ NAVEGAÇÃO ══
 function go(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo(0,0);}
 function admLogin(){
-  const entrada=v('adm-pw');
-  if(entrada===admPwd){
+  const entrada=v('adm-pw').trim();
+  const SENHA_ADMIN='123456'; // senha fixa — altere aqui se quiser mudar
+  if(entrada===SENHA_ADMIN){
     si('adm-pw','');loadAdmin();
   } else {
-    toast('Senha incorreta. Verifique e tente novamente.',true);
-    console.log('Senha atual esperada:',admPwd,'Digitada:',entrada);
+    toast('Senha incorreta. A senha é: 123456',true);
   }
 }
 
