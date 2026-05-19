@@ -177,6 +177,32 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;b
 .btn-foto-remove{border-color:var(--danger);color:var(--danger);background:#FFF5F5;display:none}
 .btn-foto-remove:hover{background:var(--danger);color:white}
 .foto-info{font-size:.7rem;color:var(--text-l);text-align:center;line-height:1.4}
+
+/* VALIDAÇÃO */
+.campo-erro{border-color:#E53E3E !important;background:#FFF5F5 !important;box-shadow:0 0 0 3px rgba(229,62,62,.15) !important}
+.label-erro{color:#C53030 !important}
+.foto-preview.foto-erro{border:2.5px solid #E53E3E !important;background:#FFF5F5 !important}
+.ci.ci-erro{border-color:#E53E3E !important;background:#FFF5F5 !important}
+
+/* MODAL DE ERROS */
+.val-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:2000;display:none;align-items:flex-end;justify-content:center;padding:0}
+.val-overlay.on{display:flex}
+.val-box{background:white;border-radius:20px 20px 0 0;padding:1.5rem 1.5rem 2rem;width:100%;max-width:520px;max-height:85vh;overflow-y:auto;box-shadow:0 -4px 24px rgba(0,0,0,.18);animation:slideUp .3s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.val-title{display:flex;align-items:center;gap:.6rem;margin-bottom:1.1rem;padding-bottom:.8rem;border-bottom:1px solid #FED7D7}
+.val-title .ico{font-size:1.4rem}
+.val-title h3{font-size:1rem;color:#C53030;font-weight:700;flex:1}
+.val-title .count{background:#E53E3E;color:white;font-size:.75rem;font-weight:700;padding:.2rem .6rem;border-radius:12px}
+.val-list{display:flex;flex-direction:column;gap:.5rem;margin-bottom:1.3rem}
+.val-item{display:flex;align-items:center;gap:.65rem;padding:.6rem .8rem;background:#FFF5F5;border:1px solid #FED7D7;border-radius:9px;cursor:pointer;transition:all .15s}
+.val-item:hover{background:#FED7D7}
+.val-item .vi-icon{font-size:1rem;flex-shrink:0}
+.val-item .vi-text{flex:1}
+.val-item .vi-label{font-size:.82rem;color:#C53030;font-weight:600;display:block}
+.val-item .vi-hint{font-size:.72rem;color:#E53E3E;display:block;margin-top:.1rem}
+.val-item .vi-go{font-size:.75rem;color:#718096}
+.val-close{width:100%;padding:.75rem;border:none;border-radius:10px;background:#2D3748;color:white;font-family:inherit;font-size:.9rem;font-weight:700;cursor:pointer}
+.val-close:hover{background:#1A202C}
 </style>
 </head>
 <body>
@@ -274,7 +300,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;b
       <div class="fg"><label>Data de Nascimento</label><input id="f-nasc" type="date" onchange="calcAge()"></div>
       <div class="fg"><label>Idade</label><input id="f-idade" type="number" readonly style="opacity:.65"></div>
     </div>
-    <div class="fg"><label>Sexo</label>
+    <div class="fg" id="sexo-group"><label>Sexo</label>
       <div class="rg">
         <label class="ri"><input type="radio" name="sexo" value="M"> <span>Masculino</span></label>
         <label class="ri"><input type="radio" name="sexo" value="F"> <span>Feminino</span></label>
@@ -323,7 +349,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;b
   <!-- DADOS RELIGIOSOS -->
   <div class="card-sm">
     <div class="card-title"><div class="ic">&#128153;</div> Dados Religiosos</div>
-    <div class="fg"><label>Experiência anterior em outras casas de Umbanda?</label>
+    <div class="fg" id="expU-group"><label>Experiência anterior em outras casas de Umbanda?</label>
       <div class="rg">
         <label class="ri"><input type="radio" name="expU" value="Sim" onchange="tog('exp-d',true)"> <span>Sim</span></label>
         <label class="ri"><input type="radio" name="expU" value="Não" onchange="tog('exp-d',false)"> <span>Não</span></label>
@@ -334,7 +360,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;b
       <div class="fg"><label>Há quanto tempo na Umbanda?</label><input id="f-tU" type="text" placeholder="Ex: 5 anos"></div>
       <div class="fg"><label>Data de Entrada na Mensageiro da Paz</label><input id="f-tC" type="date"></div>
     </div>
-    <div class="fg"><label>Possui entidade guia?</label>
+    <div class="fg" id="ent-group"><label>Possui entidade guia?</label>
       <div class="rg">
         <label class="ri"><input type="radio" name="ent" value="Sim" onchange="tog('ent-d',true)"> <span>Sim</span></label>
         <label class="ri"><input type="radio" name="ent" value="Não" onchange="tog('ent-d',false)"> <span>Não</span></label>
@@ -346,7 +372,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;b
   <!-- EQUIPES -->
   <div class="card-sm">
     <div class="card-title"><div class="ic">&#129309;</div> Participação em Equipe de Trabalho</div>
-    <div class="fg"><label>Faz parte de alguma equipe?</label>
+    <div class="fg" id="eq-group"><label>Faz parte de alguma equipe?</label>
       <div class="rg">
         <label class="ri"><input type="radio" name="eq" value="Sim"> <span>Sim</span></label>
         <label class="ri"><input type="radio" name="eq" value="Não"> <span>Não</span></label>
@@ -370,21 +396,21 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;b
   <!-- SAÚDE -->
   <div class="card-sm">
     <div class="card-title"><div class="ic">&#128154;</div> Saúde e Bem-Estar</div>
-    <div class="fg"><label>Possui restrição de saúde?</label>
+    <div class="fg" id="res-group"><label>Possui restrição de saúde?</label>
       <div class="rg">
         <label class="ri"><input type="radio" name="res" value="Sim" onchange="tog('res-d',true)"> <span>Sim</span></label>
         <label class="ri"><input type="radio" name="res" value="Não" onchange="tog('res-d',false)"> <span>Não</span></label>
       </div>
     </div>
     <div class="fg cond" id="res-d"><label>Qual restrição?</label><input id="f-res" type="text"></div>
-    <div class="fg"><label>Faz uso contínuo de medicamento?</label>
+    <div class="fg" id="med-group"><label>Faz uso contínuo de medicamento?</label>
       <div class="rg">
         <label class="ri"><input type="radio" name="med" value="Sim" onchange="tog('med-d',true)"> <span>Sim</span></label>
         <label class="ri"><input type="radio" name="med" value="Não" onchange="tog('med-d',false)"> <span>Não</span></label>
       </div>
     </div>
     <div class="fg cond" id="med-d"><label>Qual medicamento?</label><input id="f-med" type="text"></div>
-    <div class="fg"><label>Possui alergia?</label>
+    <div class="fg" id="alg-group"><label>Possui alergia?</label>
       <div class="rg">
         <label class="ri"><input type="radio" name="alg" value="Sim" onchange="tog('alg-d',true)"> <span>Sim</span></label>
         <label class="ri"><input type="radio" name="alg" value="Não" onchange="tog('alg-d',false)"> <span>Não</span></label>
@@ -658,6 +684,7 @@ function prepForm(data,mode){
   document.querySelectorAll('#sc-form input[type=checkbox]').forEach(el=>el.checked=false);
   document.querySelectorAll('.cond').forEach(el=>el.classList.remove('on'));
   removerFoto();
+  limparErros();
   // reset menor
   const rNao=document.querySelector('input[name="menor"][value="nao"]');
   if(rNao){rNao.checked=true;toggleMenor(false);}
@@ -746,11 +773,214 @@ function coleta(){
   };
 }
 
+// ══ VALIDAÇÃO COMPLETA ══
+function limparErros(){
+  document.querySelectorAll('.campo-erro').forEach(el=>el.classList.remove('campo-erro'));
+  document.querySelectorAll('.label-erro').forEach(el=>el.classList.remove('label-erro'));
+  document.querySelectorAll('.foto-erro').forEach(el=>el.classList.remove('foto-erro'));
+  document.querySelectorAll('.ci-erro').forEach(el=>el.classList.remove('ci-erro'));
+}
+
+function marcarErro(id){
+  const el=document.getElementById(id);
+  if(!el)return;
+  el.classList.add('campo-erro');
+  // marca label acima também
+  const fg=el.closest('.fg');
+  if(fg){const lbl=fg.querySelector('label');if(lbl)lbl.classList.add('label-erro');}
+}
+
+function validarCadastro(data){
+  const erros=[];
+
+  // Foto
+  if(!fotoBase64||fotoBase64.length<50){
+    erros.push({id:'foto-preview-box',label:'Foto do Membro',hint:'Adicione uma foto para o cadastro',icon:'📷',isFoto:true});
+  }
+  // Nome
+  if(!data.nome){
+    erros.push({id:'f-nome',label:'Nome Completo',hint:'Campo obrigatório',icon:'👤'});
+  }
+  // Data de nascimento
+  if(!data.nascimento){
+    erros.push({id:'f-nasc',label:'Data de Nascimento',hint:'Informe a data de nascimento',icon:'📅'});
+  }
+  // Sexo
+  if(!data.sexo){
+    erros.push({id:'sexo-group',label:'Sexo',hint:'Selecione uma opção',icon:'👤',isRadio:'sexo'});
+  }
+  // RG
+  if(!data.rg){
+    erros.push({id:'f-rg',label:'RG',hint:'Informe o RG do membro',icon:'🪪'});
+  }
+  // Endereço
+  if(!data.endereco){
+    erros.push({id:'f-end',label:'Endereço',hint:'Informe o endereço completo',icon:'🏠'});
+  }
+  // Bairro
+  if(!data.bairro){
+    erros.push({id:'f-bairro',label:'Bairro',hint:'Informe o bairro',icon:'🏘️'});
+  }
+  // Cidade
+  if(!data.cidade){
+    erros.push({id:'f-cidade',label:'Cidade',hint:'Informe a cidade',icon:'🌆'});
+  }
+  // Estado
+  if(!data.estado){
+    erros.push({id:'f-uf',label:'Estado',hint:'Selecione o estado',icon:'🗺️'});
+  }
+  // CEP
+  if(!data.cep){
+    erros.push({id:'f-cep',label:'CEP',hint:'Informe o CEP',icon:'📮'});
+  }
+  // Celular
+  if(!data.celular){
+    erros.push({id:'f-cel',label:'Celular',hint:'Informe o número de celular',icon:'📱'});
+  }
+  // Email
+  if(!data.email){
+    erros.push({id:'f-email',label:'E-mail',hint:'Informe o e-mail',icon:'📧'});
+  }
+  // Estado Civil
+  if(!data.estadoCivil){
+    erros.push({id:'f-civil',label:'Estado Civil',hint:'Selecione o estado civil',icon:'💍'});
+  }
+  // Profissão
+  if(!data.profissao){
+    erros.push({id:'f-prof',label:'Profissão',hint:'Informe a profissão',icon:'💼'});
+  }
+  // Exp Umbanda
+  if(!data.expUmbanda){
+    erros.push({id:'expU-group',label:'Experiência em Umbanda',hint:'Selecione Sim ou Não',icon:'🕊️',isRadio:'expU'});
+  }
+  // Tempo na Umbanda
+  if(!data.tempoUmbanda){
+    erros.push({id:'f-tU',label:'Há quanto tempo na Umbanda',hint:'Informe o tempo de participação',icon:'⏳'});
+  }
+  // Data entrada na casa
+  if(!data.tempoCasa){
+    erros.push({id:'f-tC',label:'Data de Entrada na Mensageiro da Paz',hint:'Informe a data de entrada',icon:'📅'});
+  }
+  // Entidade guia
+  if(!data.entidadeGuia){
+    erros.push({id:'ent-group',label:'Possui Entidade Guia',hint:'Selecione Sim ou Não',icon:'🕊️',isRadio:'ent'});
+  }
+  // Faz equipe
+  if(!data.fazEquipe){
+    erros.push({id:'eq-group',label:'Faz parte de equipe',hint:'Selecione Sim ou Não',icon:'🤝',isRadio:'eq'});
+  }
+  // Equipes (se marcou Sim)
+  if(data.fazEquipe==='Sim'&&(!data.equipes||data.equipes.length===0)){
+    erros.push({id:'equipes-lista',label:'Equipes de Trabalho',hint:'Selecione pelo menos uma equipe',icon:'🤝',isCheckbox:true});
+  }
+  // Restrição saúde
+  if(!data.restricaoSaude){
+    erros.push({id:'res-group',label:'Restrição de Saúde',hint:'Selecione Sim ou Não',icon:'💊',isRadio:'res'});
+  }
+  // Medicamento
+  if(!data.medicamento){
+    erros.push({id:'med-group',label:'Uso de Medicamento',hint:'Selecione Sim ou Não',icon:'💊',isRadio:'med'});
+  }
+  // Alergia
+  if(!data.alergia){
+    erros.push({id:'alg-group',label:'Alergia',hint:'Selecione Sim ou Não',icon:'⚕️',isRadio:'alg'});
+  }
+  // Tipo sanguíneo
+  if(!data.tipoSanguineo){
+    erros.push({id:'f-sang',label:'Tipo Sanguíneo',hint:'Selecione o tipo sanguíneo',icon:'🩸'});
+  }
+  // Aceite
+  if(!data.aceite){
+    erros.push({id:'f-aceite',label:'Termos e Autorização',hint:'Você precisa aceitar os termos',icon:'📋',isCheck:true});
+  }
+  // Menor — responsável
+  if(data.eMenor){
+    if(!data.nomeMenor){
+      erros.push({id:'f-nome-menor',label:'Nome do Menor',hint:'Informe o nome do menor',icon:'👦'});
+    }
+    if(!data.responsavel){
+      erros.push({id:'f-responsavel',label:'Responsável Legal',hint:'Informe o nome do responsável legal',icon:'👨‍👧'});
+    }
+  } else {
+    if(!data.nomeAssinatura){
+      erros.push({id:'f-nome-ass',label:'Nome para Assinatura',hint:'Informe o nome para constar na assinatura',icon:'✍️'});
+    }
+  }
+
+  return erros;
+}
+
+function mostrarErros(erros){
+  limparErros();
+
+  // Marca campos com erro visualmente
+  erros.forEach(e=>{
+    if(e.isFoto){
+      document.getElementById('foto-preview-box').classList.add('foto-erro');
+    } else if(e.isRadio){
+      // marca todos os labels do grupo de radio
+      document.querySelectorAll(`input[name="${e.isRadio}"]`).forEach(r=>{
+        const fg=r.closest('.fg');
+        if(fg){const lbl=fg.querySelector('label:first-child');if(lbl)lbl.classList.add('label-erro');}
+      });
+    } else if(e.isCheckbox){
+      document.querySelectorAll(`input[name="eqs"]`).forEach(r=>{
+        r.closest('.ci').classList.add('ci-erro');
+      });
+    } else {
+      marcarErro(e.id);
+    }
+  });
+
+  // Monta lista no modal
+  const list=document.getElementById('val-list');
+  document.getElementById('val-count').textContent=erros.length;
+  list.innerHTML=erros.map(e=>`
+    <div class="val-item" onclick="irParaCampo('${e.id}','${e.isRadio||''}')">
+      <span class="vi-icon">${e.icon}</span>
+      <div class="vi-text">
+        <span class="vi-label">${e.label}</span>
+        <span class="vi-hint">${e.hint}</span>
+      </div>
+      <span class="vi-go">▶</span>
+    </div>`).join('');
+
+  document.getElementById('val-overlay').classList.add('on');
+}
+
+function fecharValidacao(){
+  document.getElementById('val-overlay').classList.remove('on');
+}
+
+function irParaCampo(id, radioName){
+  fecharValidacao();
+  setTimeout(()=>{
+    let el=document.getElementById(id);
+    if(radioName){
+      el=document.querySelector(`input[name="${radioName}"]`);
+    }
+    if(el){
+      el.scrollIntoView({behavior:'smooth',block:'center'});
+      // Abre campos condicionais se necessário
+      const cond=el.closest('.cond');
+      if(cond)cond.classList.add('on');
+      if(el.tagName==='INPUT'&&el.type!=='radio'&&el.type!=='checkbox'){
+        setTimeout(()=>el.focus(),400);
+      }
+    }
+  },300);
+}
+
 async function saveMember(){
   const data=coleta();
-  if(!data.nome){toast('Preencha o Nome Completo',true);return;}
-  if(!data.aceite){toast('Aceite os termos para continuar',true);return;}
-  if(data.eMenor&&!data.responsavel){toast('Informe o nome do Responsável Legal',true);return;}
+  const erros=validarCadastro(data);
+
+  if(erros.length>0){
+    mostrarErros(erros);
+    return;
+  }
+
+  limparErros();
   ld(true);
   try{
     if(demo){const i=demoDb.findIndex(m=>m.cpf===data.cpf);if(i>=0)demoDb[i]=data;else demoDb.push(data);}
@@ -1176,5 +1406,20 @@ function toast(msg,err=false){
 }
 window.addEventListener('load',tryRestore);
 </script>
+
+<!-- MODAL VALIDAÇÃO -->
+<div class="val-overlay" id="val-overlay" onclick="if(event.target===this)fecharValidacao()">
+  <div class="val-box">
+    <div class="val-title">
+      <span class="ico">⚠️</span>
+      <h3>Campos obrigatórios</h3>
+      <span class="count" id="val-count">0</span>
+    </div>
+    <p style="font-size:.82rem;color:#4A5568;margin-bottom:1rem">Preencha os campos abaixo para salvar o cadastro. Toque em um item para ir direto ao campo:</p>
+    <div class="val-list" id="val-list"></div>
+    <button class="val-close" onclick="fecharValidacao()">Entendido — vou preencher</button>
+  </div>
+</div>
+
 </body>
 </html>
